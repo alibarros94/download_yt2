@@ -1,7 +1,7 @@
 import os, time, re, io, json
 from typing import Dict, Any
 from fastapi import FastAPI, Request, HTTPException, Query, Response
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from yt_dlp import YoutubeDL
@@ -172,7 +172,7 @@ async def download(req: Request,
     return StreamingResponse(iter_stream(), headers=headers, media_type="application/octet-stream")
 
 
-from fastapi.responses import HTMLResponse
+
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
