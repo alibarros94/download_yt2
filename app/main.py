@@ -231,7 +231,7 @@ async def root():
         </style>
     </head>
     <body>
-        <h1>🎥 d.end.yt Downloader</h1>
+        <h1>🎥 PH piratarias Downloader NYT</h1>
         <form id="form">
             <input type="url" id="url" placeholder="Cole aqui a URL do vídeo" required />
             <button type="submit">Baixar</button>
