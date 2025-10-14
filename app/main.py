@@ -7,7 +7,7 @@ import httpx
 from yt_dlp import YoutubeDL
 from collections import defaultdict
 
-APP_DOMAIN = os.getenv("APP_DOMAIN", "https://canal.yt")
+APP_DOMAIN = os.getenv("APP_DOMAIN", "https://d.end.yt")
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET", "")  # defina no Coolify
 RATE_WINDOW_SEC = 1800  # 30min
 RATE_MAX_ANALYZE = 10
