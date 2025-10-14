@@ -30,6 +30,7 @@ YTDLP_OPTS_PROBE = {
     "skip_download": True,
     "noplaylist": True,
     "extract_flat": False,
+    "cookiefile": "cookies.txt",
 }
 
 rate_hits_analyze: Dict[str, list] = defaultdict(list)
@@ -147,7 +148,7 @@ async def download(req: Request,
         raise HTTPException(status_code=400, detail="Formato ausente.")
 
     try:
-        with YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+        with YoutubeDL({"quiet": True, "no_warnings": True, "cookiefile": "cookies.txt"}) as ydl:
             info = ydl.extract_info(url, download=False)
             fmts = {f["format_id"]: f for f in info.get("formats", []) if f.get("url")}
             chosen = fmts.get(format_id)
