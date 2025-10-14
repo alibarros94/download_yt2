@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>canal.yt - Analisador de vídeo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background: #f9f9f9; }
+        #formats-table { margin-top: 1em; border-collapse: collapse; width: 100%; }
+        #formats-table th, #formats-table td { border: 1px solid #ccc; padding: 6px; }
+        #formats-table th { background: #eee; }
+        .btn { padding: 6px 12px; background: #1976d2; color: #fff; border: none; border-radius: 4px; cursor: pointer;}
+        .btn:disabled { background: #bbb; }
+        .thumb { max-width: 240px; }
+        #tos { margin-bottom: 1em; }
+    </style>
+</head>
+<body>
+    <h2>canal.yt</h2>
+    <form id="analyze-form">
+        <label for="video-url">URL do vídeo:</label><br>
+        <input type="url" id="video-url" name="video-url" required style="width:70%;">
+        <div id="tos">
+            <input type="checkbox" id="tos-accept" required>
+            <label for="tos-accept">
+                Eu li e aceito os <a href="/termos.html" target="_blank">Termos de Uso</a>.
+            </label>
+        </div>
+        <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITEKEY"></div>
+        <button type="submit" class="btn">Detectar formatos</button>
+    </form>
+    <div id="result"></div>
+    <script>
+    const API_URL = "/analyze";
+    document.getElementById("analyze-form").onsubmit = async (e) => {
+        e.preventDefault();
+        const url = document.getElementById("video-url").value.trim();
+        const tos = document.getElementById("tos-accept").checked;
+        if (!tos) { alert("Aceite os termos."); return; }
+        const token = window.turnstile && window.turnstile.getResponse();
+        if (!token) { alert("Complete o Captcha!"); return; }
+        const resDiv = document.getElementById("result");
+        resDiv.innerHTML = "Analisando...";
+        try {
+            const resp = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url, captchaToken: token })
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.detail || "Erro desconhecido");
+            resDiv.innerHTML = `
+                <h3>${data.title}</h3>
+                <img src="${data.thumbnail}" class="thumb"><br>
+                <b>ID:</b> ${data.id}<br>
+                <b>Uploader:</b> ${data.uploader}<br>
+                <b>Duração:</b> ${data.duration}s<br>
+                <table id="formats-table">
+                <tr>
+                    <th>Tipo</th><th>Resolução</th><th>Tamanho</th><th>Ação</th>
+                </tr>
+                ${data.formats.map(f => `
+                    <tr>
+                        <td>${f.ext} ${f.format_note || ""}</td>
+                        <td>${f.height || ""}p</td>
+                        <td>${f.filesize ? (f.filesize/1024/1024).toFixed(1) + "MB" : "-"}</td>
+                        <td>
+                            <a class="btn" href="/download?url=${encodeURIComponent(url)}&format_id=${f.format_id}" target="_blank">
+                                Preparar download
+                            </a>
+                        </td>
+                    </tr>
+                `).join("")}
+                </table>
+            `;
+        } catch (err) {
+            resDiv.innerHTML = `<span style="color:red;">${err.message}</span>`;
+        }
+    };
+    </script>
+</body>
+</html>
