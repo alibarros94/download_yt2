@@ -170,3 +170,19 @@ async def download(req: Request,
     filename = f"canal-yt-{info.get('id','video')}-{format_id}.{chosen.get('ext','mp4')}"
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
     return StreamingResponse(iter_stream(), headers=headers, media_type="application/octet-stream")
+
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return """
+    <html>
+        <head><title>d.end.yt Downloader</title></head>
+        <body style="font-family:sans-serif;text-align:center;padding-top:50px;">
+            <h1>🚀 d.end.yt Downloader</h1>
+            <p>API online. Use <code>/analyze</code> e <code>/download</code> para processar vídeos.</p>
+        </body>
+    </html>
+    """
+
