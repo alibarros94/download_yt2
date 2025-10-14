@@ -5,7 +5,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
+COPY cookies.txt /app/cookies.txt
 EXPOSE 3000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "3000"]
-COPY cookies.txt /app/cookies.txt
-
