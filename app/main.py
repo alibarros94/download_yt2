@@ -172,8 +172,6 @@ async def download(req: Request,
     return StreamingResponse(iter_stream(), headers=headers, media_type="application/octet-stream")
 
 
-
-
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return """
@@ -183,6 +181,7 @@ async def root():
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>d.end.yt Downloader</title>
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -234,6 +233,10 @@ async def root():
         <h1>🎥 PH piratarias Downloader NYT</h1>
         <form id="form">
             <input type="url" id="url" placeholder="Cole aqui a URL do vídeo" required />
+            
+            <!-- 👇 Widget do Cloudflare Turnstile -->
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAAB6b69VJxARp_Wtj"></div>
+
             <button type="submit">Baixar</button>
             <div id="msg"></div>
         </form>
@@ -248,14 +251,16 @@ async def root():
                 msg.textContent = '🔍 Analisando vídeo...';
                 const videoUrl = urlInput.value.trim();
 
+                // 👇 Captura o token gerado pelo widget Turnstile
+                const captchaToken = document.querySelector('input[name="cf-turnstile-response"]')?.value;
+
                 try {
-                    // ⚠️ Captcha opcional: estamos enviando string vazia
                     const res = await fetch('/analyze', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             url: videoUrl,
-                            captchaToken: 'dummy'
+                            captchaToken: captchaToken
                         })
                     });
 
@@ -269,12 +274,10 @@ async def root():
                         throw new Error('Nenhum formato disponível.');
                     }
 
-                    // Escolhe automaticamente o primeiro formato com vídeo e áudio
+                    // Escolhe o primeiro formato com vídeo e áudio
                     const chosen = data.formats.find(f => f.vcodec !== 'none' && f.acodec !== 'none') || data.formats[0];
 
                     msg.textContent = '⬇️ Preparando download...';
-
-                    // Redireciona para o endpoint de download
                     const dlUrl = `/download?url=${encodeURIComponent(videoUrl)}&format_id=${chosen.format_id}`;
                     window.location.href = dlUrl;
                 } catch (err) {
@@ -285,4 +288,6 @@ async def root():
     </body>
     </html>
     """
+
+
 
