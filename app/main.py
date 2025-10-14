@@ -13,7 +13,7 @@ RATE_WINDOW_SEC = 1800  # 30min
 RATE_MAX_ANALYZE = 10
 RATE_MAX_DL = 5
 
-app = FastAPI(title="canal.yt downloader")
+app = FastAPI(title="d.end.yt downloader")
 
 # CORS estrito: só o seu domínio
 app.add_middleware(
