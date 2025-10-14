@@ -235,27 +235,54 @@ async def root():
         <h1>🎥 PH piratarias Downloader NYT</h1>
         <form id="form">
             <input type="url" id="url" placeholder="Cole aqui a URL do vídeo" required />
-            
-            <!-- 👇 Widget do Cloudflare Turnstile -->
+        
+            <!-- Widget Cloudflare -->
             <div class="cf-turnstile" data-sitekey="0x4AAAAAAB6b69VJxARp_Wtj"></div>
-
-            <button type="submit">Baixar</button>
+        
+            <!-- Dropdown de resoluções -->
+            <select id="formatSelect" disabled>
+                <option value="">Selecione a resolução</option>
+            </select>
+        
+            <button type="submit" disabled>Baixar</button>
             <div id="msg"></div>
         </form>
+
 
         <script>
             const form = document.getElementById('form');
             const urlInput = document.getElementById('url');
             const msg = document.getElementById('msg');
-
+            const formatSelect = document.getElementById('formatSelect');
+            const submitBtn = form.querySelector('button');
+            
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                msg.textContent = '🔍 Analisando vídeo...';
+            
+                if (!formatSelect.value) {
+                    msg.textContent = "❌ Escolha uma resolução.";
+                    return;
+                }
+            
                 const videoUrl = urlInput.value.trim();
-
-                // 👇 Captura o token gerado pelo widget Turnstile
+                const chosenFormat = formatSelect.value;
+            
+                msg.textContent = '⬇️ Preparando download...';
+                const dlUrl = `/download?url=${encodeURIComponent(videoUrl)}&format_id=${chosenFormat}`;
+                window.location.href = dlUrl;
+            });
+            
+            // Quando digitar a URL, dispara análise automática
+            urlInput.addEventListener('change', async () => {
+                const videoUrl = urlInput.value.trim();
+                if (!videoUrl) return;
+            
+                msg.textContent = '🔍 Analisando vídeo...';
+                formatSelect.innerHTML = '<option>Carregando...</option>';
+                submitBtn.disabled = true;
+            
                 const captchaToken = document.querySelector('input[name="cf-turnstile-response"]')?.value;
-
+            
                 try {
                     const res = await fetch('/analyze', {
                         method: 'POST',
@@ -265,27 +292,41 @@ async def root():
                             captchaToken: captchaToken
                         })
                     });
-
+            
                     if (!res.ok) {
                         const err = await res.json();
                         throw new Error(err.detail || 'Erro ao analisar');
                     }
-
+            
                     const data = await res.json();
+            
                     if (!data.formats || data.formats.length === 0) {
                         throw new Error('Nenhum formato disponível.');
                     }
-
-                    // Escolhe o primeiro formato com vídeo e áudio
-                    const chosen = data.formats.find(f => f.vcodec !== 'none' && f.acodec !== 'none') || data.formats[0];
-
-                    msg.textContent = '⬇️ Preparando download...';
-                    const dlUrl = `/download?url=${encodeURIComponent(videoUrl)}&format_id=${chosen.format_id}`;
-                    window.location.href = dlUrl;
+            
+                    // Monta a lista de resoluções
+                    formatSelect.innerHTML = '';
+                    data.formats
+                        .filter(f => f.vcodec !== 'none') // pega só formatos de vídeo
+                        .forEach(f => {
+                            const optText = `${f.height || 'audio'}p ${f.ext} ${f.format_note || ''}`.trim();
+                            const opt = document.createElement('option');
+                            opt.value = f.format_id;
+                            opt.textContent = optText;
+                            formatSelect.appendChild(opt);
+                        });
+            
+                    msg.textContent = '✅ Formatos carregados. Selecione um.';
+                    formatSelect.disabled = false;
+                    submitBtn.disabled = false;
+            
                 } catch (err) {
                     msg.textContent = '❌ ' + err.message;
+                    formatSelect.disabled = true;
+                    submitBtn.disabled = true;
                 }
             });
+
         </script>
     </body>
     </html>
