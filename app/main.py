@@ -12,6 +12,7 @@ TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET", "")  # defina no Coolify
 RATE_WINDOW_SEC = 1800  # 30min
 RATE_MAX_ANALYZE = 10
 RATE_MAX_DL = 5
+COOKIE_PATH = os.path.join(os.path.dirname(__file__), "..", "cookies.txt")
 
 app = FastAPI(title="d.end.yt downloader")
 
@@ -30,7 +31,7 @@ YTDLP_OPTS_PROBE = {
     "skip_download": True,
     "noplaylist": True,
     "extract_flat": False,
-    "cookiefile": "cookies.txt",
+    "cookiefile": COOKIE_PATH,
 }
 
 rate_hits_analyze: Dict[str, list] = defaultdict(list)
@@ -148,7 +149,7 @@ async def download(req: Request,
         raise HTTPException(status_code=400, detail="Formato ausente.")
 
     try:
-        with YoutubeDL({"quiet": True, "no_warnings": True, "cookiefile": "cookies.txt"}) as ydl:
+        with YoutubeDL({"quiet": True, "no_warnings": True, "cookiefile": COOKIE_PATH}) as ydl:
             info = ydl.extract_info(url, download=False)
             fmts = {f["format_id"]: f for f in info.get("formats", []) if f.get("url")}
             chosen = fmts.get(format_id)
