@@ -177,12 +177,112 @@ async def download(req: Request,
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return """
-    <html>
-        <head><title>d.end.yt Downloader</title></head>
-        <body style="font-family:sans-serif;text-align:center;padding-top:50px;">
-            <h1>🚀 d.end.yt Downloader</h1>
-            <p>API online. Use <code>/analyze</code> e <code>/download</code> para processar vídeos.</p>
-        </body>
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>d.end.yt Downloader</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #111;
+                color: #eee;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+            }
+            h1 { margin-bottom: 1rem; }
+            form {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+                width: 90%;
+                max-width: 500px;
+            }
+            input[type="url"] {
+                width: 100%;
+                padding: 10px;
+                font-size: 16px;
+                border-radius: 8px;
+                border: 1px solid #555;
+                background: #222;
+                color: #eee;
+            }
+            button {
+                background: #28a745;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 16px;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+            button:disabled { opacity: 0.5; cursor: not-allowed; }
+            #msg {
+                margin-top: 1rem;
+                font-size: 14px;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🎥 d.end.yt Downloader</h1>
+        <form id="form">
+            <input type="url" id="url" placeholder="Cole aqui a URL do vídeo" required />
+            <button type="submit">Baixar</button>
+            <div id="msg"></div>
+        </form>
+
+        <script>
+            const form = document.getElementById('form');
+            const urlInput = document.getElementById('url');
+            const msg = document.getElementById('msg');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                msg.textContent = '🔍 Analisando vídeo...';
+                const videoUrl = urlInput.value.trim();
+
+                try {
+                    // ⚠️ Captcha opcional: estamos enviando string vazia
+                    const res = await fetch('/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: videoUrl,
+                            captchaToken: 'dummy'
+                        })
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.detail || 'Erro ao analisar');
+                    }
+
+                    const data = await res.json();
+                    if (!data.formats || data.formats.length === 0) {
+                        throw new Error('Nenhum formato disponível.');
+                    }
+
+                    // Escolhe automaticamente o primeiro formato com vídeo e áudio
+                    const chosen = data.formats.find(f => f.vcodec !== 'none' && f.acodec !== 'none') || data.formats[0];
+
+                    msg.textContent = '⬇️ Preparando download...';
+
+                    // Redireciona para o endpoint de download
+                    const dlUrl = `/download?url=${encodeURIComponent(videoUrl)}&format_id=${chosen.format_id}`;
+                    window.location.href = dlUrl;
+                } catch (err) {
+                    msg.textContent = '❌ ' + err.message;
+                }
+            });
+        </script>
+    </body>
     </html>
     """
 
